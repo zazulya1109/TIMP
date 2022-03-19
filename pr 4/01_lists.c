@@ -34,6 +34,7 @@ void clean(list *l) {
 	l->tail = NULL;
 }
 
+
 // проверка на пустоту списка
 bool is_empty(list *l) {
 	return l->head == NULL;
