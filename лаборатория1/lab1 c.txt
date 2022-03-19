@@ -1,0 +1,239 @@
+#include <time.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#define arr_size(arr)  (sizeof arr / sizeof arr[0])
+
+int arrLengths[] = { 1,2,3,4,5,10,15,20,25,30,50,75,100,250,500 };
+
+int* arr_copy(int* a, int size)
+{
+	int *res = (int*)malloc(size * sizeof(int));
+	for (int i = 0; i < size; i++)
+		res[i] = a[i];
+	return res;
+}
+
+void arr_print(int a[], int size)
+{
+	for (int i = 0; i < size; i++)
+		printf("%d ", a[i]);
+	printf("\n");
+}
+
+int randomRange(int min, int max)
+{
+	return min + rand() % max;
+}
+
+// сортировка расчёской
+int combSort(int* a, int sizeArray)
+{
+	int count = 0;
+	// Проходимся по всем элементам массива
+	for (int i = 0; i < sizeArray; i++) {
+		// Сравниваем попарно. Начинаем с первого и последнего элемента, затем постепенно уменьшаем диапазон сравниваемых значеный.
+		for (int j = 0; j < i + 1; j++) {
+			// Индекс правого элемента в текущей итерации сравнения
+			int elementRight = (sizeArray - 1) - (i - j);
+			count++;
+			if (a[j] > a[elementRight])
+			{
+				count++;
+				int tmp = a[j];
+				a[j] = a[elementRight];
+				a[elementRight] = tmp;
+			}
+		}
+	}
+	return count;
+}
+
+// сортировка Шелла
+int shellSort(int* a, int size)
+{
+	int step, i, j, tmp, count = 0;
+	// Выбор шага
+	for (step = size / 2; step > 0; step /= 2)
+		// Перечисление элементов, которые сортируются на определённом шаге
+		for (i = step; i < size; i++)
+		{
+			count++;
+			// Перестановка элементов внутри подсписка, пока i-тый не будет отсортирован
+			for (j = i - step; j >= 0 && a[j] > a[j + step]; j -= step)
+			{
+				count++;
+				tmp = a[j];
+				a[j] = a[j + step];
+				a[j + step] = tmp;
+			}
+		}
+	return count;
+}
+
+// Быстрая сортировка
+int quickSort(int* a, int first, int last)
+{
+	int count = 1;
+	if (first < last)
+	{
+		int left = first, right = last, middle = a[(left + right) / 2];
+		do
+		{
+			count++; while (a[left] < middle) { left++; count++; };
+			count++; while (a[right] > middle) { right--; count++; };
+			count++;
+			if (left <= right)
+			{
+				int tmp = a[left];
+				a[left] = a[right];
+				a[right] = tmp;
+				left++;
+				right--;
+				count++;
+			}
+			count++;
+		} while (left <= right);
+		count += quickSort(a, first, right);
+		count += quickSort(a, left, last);
+	}
+	return count;
+}
+
+// Пирамидальная сортировка
+int pyramidSort(int* a, int size)
+{
+	int tmp, sh = 0, count = 0;
+	while (1)
+	{
+		for (int i = 0; i < size; ++i)
+		{
+			if (2 * i + 2 + sh < size)
+			{
+				count++;
+				if (a[i + sh] > a[2 * i + 1 + sh] || a[i + sh] > a[2 * i + 2 + sh])
+				{
+					count++;
+					if (a[2 * i + 1 + sh] < a[2 * i + 2 + sh])
+					{
+						count++;
+						tmp = a[i + sh];
+						a[i + sh] = a[2 * i + 1 + sh];
+						a[2 * i + 1 + sh] = tmp;
+					}
+					else
+					{
+						count++;
+						if (a[2 * i + 2 + sh] < a[2 * i + 1 + sh])
+						{
+							count++;
+							tmp = a[i + sh];
+							a[i + sh] = a[2 * i + 2 + sh];
+							a[2 * i + 2 + sh] = tmp;
+						}
+					}
+				}
+			}
+			else if (2 * i + 1 + sh < size)
+			{
+				count++;
+				if (a[i + sh] > a[2 * i + 1 + sh])
+				{
+					count++;
+					tmp = a[i + sh];
+					a[i + sh] = a[2 * i + 1 + sh];
+					a[2 * i + 1 + sh] = tmp;
+				}
+			}
+		}
+		if (sh++);
+		if (sh + 2 >= size) break;
+	}
+	return count;
+}
+
+// Переменные для хранения сумм времени выполнения и кол-ва операций для каждого алгоритма сортировки
+int summaryTime_compSort = 0, summaryTime_shellSort = 0, summaryTime_quickSort = 0, summaryTime_pyramidSort = 0, tmpTime,
+summaryOperations_compSort = 0, summaryOperations_shellSort = 0, summaryOperations_quickSort = 0, summaryOperations_pyramidSort = 0;
+
+// количество создаваемых массивов для каждой длины массива( arrLengths - 1,2,3...500 )
+int arrayCount = 1000;
+
+int main(void)
+{
+	// проходим в цикле по всем длинам массивов
+	for (int i = 0; i < arr_size(arrLengths); i++)
+	{
+		// создаем arrayCount массивов заданной длины
+		for (int k = 0; k < arrayCount; k++)
+		{
+			int *arr; // <-- создаемый массив, временный массив
+			int *tmpArr = (int*)malloc(arrLengths[i] * sizeof(int));
+			// заполнение массива случайными числами
+			for (int j = 0; j < arrLengths[i]; j++)
+				tmpArr[j] = randomRange(-500, 500);
+
+			// сортировка расческой
+			arr = arr_copy(tmpArr, arrLengths[i]);
+			tmpTime = clock(); // время начала сортировки
+			// получаем количество операций и суммируем их
+			summaryOperations_compSort += combSort(arr, arrLengths[i]);
+			// получаем время выполнения сортировки и суммируем его
+			summaryTime_compSort += clock() - tmpTime;
+
+			// сортировка Шелла
+			arr = arr_copy(tmpArr, arrLengths[i]);
+			tmpTime = clock(); // время начала сортировки
+			// получаем количество операций и суммируем их
+			summaryOperations_shellSort += shellSort(arr, arrLengths[i]);
+			// получаем время выполнения сортировки и суммируем его
+			summaryTime_shellSort += clock() - tmpTime;
+
+			// сортировка "быстрая"
+			arr = arr_copy(tmpArr, arrLengths[i]);
+			tmpTime = clock(); // время начала сортировки
+			// получаем количество операций и суммируем их
+			summaryOperations_quickSort += quickSort(arr, 0, arrLengths[i] - 1);
+			// получаем время выполнения сортировки и суммируем его
+			summaryTime_quickSort += clock() - tmpTime;
+
+			// сортировка "Пирамидальная"
+			arr = arr_copy(tmpArr, arrLengths[i]);
+			tmpTime = clock(); // время начала сортировки
+			// получаем количество операций и суммируем их
+			summaryOperations_pyramidSort += pyramidSort(arr, arrLengths[i]);
+			// получаем время выполнения сортировки и суммируем его
+			summaryTime_pyramidSort += clock() - tmpTime;
+		}
+
+		// получаем среднее время выполнения сортировки разными алгоритмами
+		float averageTime_compSort = (float)summaryTime_compSort / arrayCount;
+		float averageTime_shellSort = (float)summaryTime_shellSort / arrayCount;
+		float averageTime_quickSort = (float)summaryTime_quickSort / arrayCount;
+		float averageTime_pyramidSort = (float)summaryTime_pyramidSort / arrayCount;
+
+		// получаем среднее количество операций требуемых для сортировки различтными алгоритмами
+		float averageOperations_compSort = (float)summaryOperations_compSort / arrayCount;
+		float averageOperations_shellSort = (float)summaryOperations_shellSort / arrayCount;
+		float averageOperations_quickSort = (float)summaryOperations_quickSort / arrayCount;
+		float averageOperations_pyramidSort = (float)summaryOperations_pyramidSort / arrayCount;
+
+		// обнуляем значения времени и операций для следующей итерации цикла
+		summaryTime_compSort = 0;
+		summaryTime_shellSort = 0;
+		summaryTime_quickSort = 0;
+		summaryTime_pyramidSort = 0;
+		summaryOperations_compSort = 0;
+		summaryOperations_shellSort = 0;
+		summaryOperations_quickSort = 0;
+		summaryOperations_pyramidSort = 0;
+
+		// выводим полученные значения о времени сортировки и требуемого количества операций
+		printf("Array count: %d. Array length: %d.\nAverage Sort Time:\tComp: %.2f ms | Shell: %.2f ms | Quick: %.2f ms | Pyramid: %.2f ms\n",
+			arrayCount, arrLengths[i], averageTime_compSort, averageTime_shellSort, averageTime_quickSort, averageTime_pyramidSort);
+		printf("Average operations count:\tComp: %.2f | Shell: %.2f | Quick: %.2f | Pyramid: %.2f\n",
+			averageOperations_compSort, averageOperations_shellSort, averageOperations_quickSort, averageOperations_pyramidSort);
+	}
+
+	return 0;
+}
